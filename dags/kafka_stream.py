@@ -5,7 +5,9 @@ import json
 import requests
 import uuid
 from kafka import KafkaProducer
+from kafka.admin import KafkaAdminClient, NewTopic
 import time
+import logging
 
 default_args = {
     "owner": "Phi Nguyen",
@@ -38,23 +40,41 @@ def format_data(user_data):
     return data
 
 def stream_data():
-    user_info = get_data()
-    user_info = format_data(user_info)
     
-    producer = KafkaProducer(
-        bootstrap_servers=['localhost:9092'],
-        max_block_ms=5000
+    try:
+        bootstrap_servers = ['broker:29092']       
+        producer = KafkaProducer(
+            bootstrap_servers=bootstrap_servers,
+            max_block_ms=5000
+        )
+    except Exception as e:
+        logging.error(f'Failed to connect to Kafka: {e}')
+        return
+    
+    logging.info('Connected to Kafka successfully')
+
+    curr_time = time.time()
+    while True:
+        if time.time() > curr_time + 60:
+            break
+        try:
+            user_info = get_data()
+            user_info = format_data(user_info)
+            producer.send('user_created', json.dumps(user_info).encode('utf-8'))
+        except Exception as e:
+            logging.error(f'An error occured: {e}')
+            continue
+    
+    producer.flush()  # Ensure all messages are sent
+    producer.close()
+    logging.info('Finished streaming data to Kafka')
+# stream_data()
+
+with DAG("user_automation",
+        default_args=default_args,
+        schedule_interval='@daily',
+        catchup=False) as dag:
+    streaming_task = PythonOperator(
+        task_id="stream_data_from_api",
+        python_callable=stream_data
     )
-
-    producer.send('user_created', json.dumps(user_info).encode('utf-8'))
-
-stream_data()
-
-# with DAG("user_automation",
-#          default_args=default_args,
-#          schedule_interval='@daily',
-#          catchup=False) as dag:
-#     streaming_task = PythonOperator(
-#         task_id="stream_data_from_api",
-#         python_callable=stream_data
-#     )
