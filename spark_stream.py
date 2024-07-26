@@ -4,7 +4,12 @@ from cassandra.cluster import Cluster
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col
 from pyspark.sql.types import StructType, StructField, StringType
+from config import config
 
+CASSANDRA_HOST=config['cassandra_host']
+KAFKA_BOOTSTRAP_SERVERS=config['kafka_bootstrap_servers']
+print(CASSANDRA_HOST)
+print(KAFKA_BOOTSTRAP_SERVERS)
 
 def create_keyspace(session):
     session.execute("""
@@ -69,9 +74,9 @@ def create_spark_connection():
     try:
         s_conn = SparkSession.builder \
             .appName('SparkDataStreaming') \
-            .config('spark.jars.packages', "com.datastax.spark:spark-cassandra-connector_2.13:3.4.1,"
-                                           "org.apache.spark:spark-sql-kafka-0-10_2.13:3.4.1") \
-            .config('spark.cassandra.connection.host', 'localhost') \
+            .config('spark.jars.packages', "com.datastax.spark:spark-cassandra-connector_2.12:3.5.1,"
+                                           "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1") \
+            .config('spark.cassandra.connection.host', CASSANDRA_HOST) \
             .getOrCreate()
 
         s_conn.sparkContext.setLogLevel("ERROR")
@@ -87,8 +92,8 @@ def connect_to_kafka(spark_conn):
     try:
         spark_df = spark_conn.readStream \
             .format('kafka') \
-            .option('kafka.bootstrap.servers', 'localhost:9092') \
-            .option('subscribe', 'users_created') \
+            .option('kafka.bootstrap.servers', KAFKA_BOOTSTRAP_SERVERS) \
+            .option('subscribe', 'user_created') \
             .option('startingOffsets', 'earliest') \
             .load()
         logging.info("kafka dataframe created successfully")
@@ -101,7 +106,7 @@ def connect_to_kafka(spark_conn):
 def create_cassandra_connection():
     try:
         # connecting to the cassandra cluster
-        cluster = Cluster(['localhost'])
+        cluster = Cluster([CASSANDRA_HOST])
 
         cas_session = cluster.connect()
 

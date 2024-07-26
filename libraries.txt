@@ -1,3 +1,5 @@
+requests
+apache-airflow
 kafka-python
 cassandra-driver
 spark
