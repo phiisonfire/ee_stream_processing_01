@@ -1,0 +1,42 @@
+spark-submit \
+    --master spark://172.18.0.2:7077 \
+    --packages org.apache.spark:spark-sql-kafka-0-10_2.13:3.5.1,com.datastax.spark:spark-cassandra-connector_2.13:3.4.1 \
+    spark_stream.py
+
+spark-submit \
+  --master spark://172.18.0.2:7077 \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector_2.12:3.5.1 \
+  spark_stream.py
+
+spark-submit \
+  --master spark://172.18.0.2:7077 \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector_2.12:3.5.1 \
+  spark_stream.py
+
+spark-submit \
+  --master local[4] \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector_2.12:3.5.1 \
+  spark_stream.py
+
+spark-submit \
+  --master spark://172.18.0.2:7077 \
+  --conf "spark.driver.extraJavaOptions=-Dlog4j.configuration=file:spark_conf/log4j.properties" \
+  --conf "spark.executor.extraJavaOptions=-Dlog4j.configuration=file:spark_conf/log4j.properties" \
+  spark_stream.py
+
+spark-submit \
+  --master spark://172.18.0.2:7077 \
+  --conf "spark.driver.extraClassPath=./spark_libs/spark-sql-kafka-0-10_2.12-3.5.1.jar:./spark_libs/spark-cassandra-connector_2.12-3.5.1.jar" \
+  --conf "spark.executor.extraClassPath=./spark_libs/spark-sql-kafka-0-10_2.12-3.5.1.jar:./spark_libs/spark-cassandra-connector_2.12-3.5.1.jar" \
+  spark_stream.py
+
+spark-submit \
+  --master local[4] \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector_2.12:3.5.1 \
+  spark_stream.py
+
+docker exec -it cassandra cqlsh -u cassandra -p cassandra localhost 9042
+cassandra@cqlsh> DESCRIBE spark_streams;
+cassandra@cqlsh> DESCRIBE spark_streams.created_users;
+
+/home/phinguyen/miniconda3/envs/ee_stream_01/lib/python3.11/site-packages/pyspark/jars/
